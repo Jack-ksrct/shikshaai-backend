@@ -1,0 +1,66 @@
+"""Concept explanation and diagram prompt service."""
+
+from __future__ import annotations
+
+from services.ollama_client import get_ollama_client
+from services.language_detector import LanguageInfo
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+_EXPLAIN_PROMPT = """You are ShikshaAI Bharat, a warm and friendly AI tutor for Indian school students.
+
+Student's grade level: {grade_level}
+Student's language: {primary_language} {code_mix_note}
+Student's question/concept: {text}
+
+Write a clear, engaging explanation that:
+1. Uses simple vocabulary appropriate for {grade_level}
+2. Includes a relatable local Indian analogy or example
+3. Highlights 2-3 key points the student must remember
+4. Ends with an encouraging note or a thought-provoking follow-up question
+5. Responds in {primary_language} — if the student used code-mixed language, mirror their style naturally
+
+Do NOT use markdown headers or bullet dashes in your response. Write in flowing, conversational paragraphs.
+"""
+
+_DIAGRAM_PROMPT = """Create a concise educational image generation prompt (max 60 words) for:
+Concept: {concept}
+Summary: {explanation}
+
+The image should be: a clean educational diagram or illustration, whiteboard style, labeled clearly, 
+suitable for Indian school students, no text overlays, clear visual metaphors.
+Return ONLY the image generation prompt text, nothing else."""
+
+
+class ConceptService:
+    def __init__(self) -> None:
+        self._client = get_ollama_client()
+
+    def simplify(self, text: str, lang_info: LanguageInfo, grade_level: str = "Class 6-8") -> str:
+        code_mix_note = ""
+        if lang_info.code_mix_type:
+            code_mix_note = f"(code-mixed: {lang_info.code_mix_type})"
+
+        prompt = _EXPLAIN_PROMPT.format(
+            grade_level=grade_level,
+            primary_language=lang_info.primary_language,
+            code_mix_note=code_mix_note,
+            text=text,
+        )
+        try:
+            return self._client.generate(prompt)
+        except Exception as exc:
+            logger.exception("Concept simplification failed")
+            raise RuntimeError(f"Could not generate explanation: {exc}") from exc
+
+    def build_diagram_prompt(self, concept_text: str, explanation: str) -> str:
+        prompt = _DIAGRAM_PROMPT.format(
+            concept=concept_text[:200],
+            explanation=explanation[:400],
+        )
+        try:
+            return self._client.generate(prompt).strip()
+        except Exception as exc:
+            logger.warning("Diagram prompt generation failed: %s", exc)
+            return f"Educational diagram showing {concept_text[:80]}, clean whiteboard style, labeled"
