@@ -115,13 +115,13 @@ Whisper detected language: {whisper_lang}
                 raise ValueError("No JSON in Ollama response")
             data = json.loads(match.group())
             return LanguageInfo(
-                primary_language=data.get("primary_language", "English"),
-                secondary_languages=data.get("secondary_languages", []),
+                primary_language=data.get("primary_language") or "English",
+                secondary_languages=data.get("secondary_languages") or [],
                 code_mix_type=data.get("code_mix_type"),
-                script=data.get("script", "Latin"),
-                confidence=float(data.get("confidence", 0.85)),
-                language_style_note=data.get("language_style_note", ""),
-                display_label=data.get("display_label", data.get("primary_language", "English")),
+                script=data.get("script") or "Latin",
+                confidence=float(data.get("confidence") or 0.85),
+                language_style_note=data.get("language_style_note") or "",
+                display_label=data.get("display_label") or data.get("primary_language") or "English",
             )
         except Exception as exc:
             logger.warning("Ollama language detection failed: %s — using Whisper fallback.", exc)
