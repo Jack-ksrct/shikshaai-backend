@@ -34,34 +34,34 @@ class QuizResult:
     short_answer_questions: list[ShortAnswerQuestion]
 
 
-_QUIZ_PROMPT = """You are ShikshaAI Bharat, generating a quiz for Indian school students.
+_QUIZ_PROMPT = """You are ShikshaAI Bharat, generating a quiz for students.
 
-Concept: {concept}
+Concept Request: {concept}
 Explanation: {explanation}
-Language: {language}
+Target Language: {language}
 Code-mix style: {code_mix}
 
-Generate a quiz as valid JSON only (no markdown, no backticks):
+Generate a quiz as valid JSON only (no markdown, no backticks).
+Follow the user's Concept Request for the number and type of questions (e.g., if they ask for "10 MCQs", generate 10 MCQs and 0 short-answer questions). If no number is specified, default to 3 MCQs and 2 short-answer questions.
+CRITICAL: You MUST write the entire quiz in the exact Target Language specified above. Do NOT use Hindi unless the Target Language is Hindi.
+
 {{
   "mcq_questions": [
     {{
-      "question": "<question in {language}>",
+      "question": "<question in Target Language>",
       "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
       "correct_answer": "A",
-      "explanation": "<why this is correct, in {language}>"
+      "explanation": "<why this is correct, in Target Language>"
     }}
   ],
   "short_answer_questions": [
     {{
-      "question": "<question in {language}>",
-      "model_answer": "<expected answer in {language}>",
+      "question": "<question in Target Language>",
+      "model_answer": "<expected answer in Target Language>",
       "keywords": ["<keyword1>", "<keyword2>"]
     }}
   ]
 }}
-
-Generate exactly 3 MCQ questions and 2 short-answer questions.
-If language is Hindi or a code-mixed variant, write questions in that language.
 """
 
 
