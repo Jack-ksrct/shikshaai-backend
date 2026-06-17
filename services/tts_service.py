@@ -90,6 +90,12 @@ class TTSService:
         if script_voice:
             voice = script_voice
 
+        import re
+        # Remove markdown characters
+        text = re.sub(r'[*#_~`]', '', text)
+        # Remove emojis (Supplementary planes and Miscellaneous Symbols)
+        text = re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf]', '', text)
+        
         # Truncate very long text
         if len(text) > 2000:
             text = text[:2000] + "..."
