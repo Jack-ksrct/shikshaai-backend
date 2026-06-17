@@ -21,13 +21,15 @@ class OllamaClient:
         self._model = settings.ollama_model
         logger.info(f"Ollama client initialized: url={self._url}, model={self._model}")
 
-    def generate(self, prompt: str, max_retries: int = 1) -> str:
+    def generate(self, prompt: str, max_retries: int = 1, format: str | None = None) -> str:
         """Generate text using Ollama. Returns response text string."""
         payload = {
             "model": self._model,
             "prompt": prompt,
             "stream": False,
         }
+        if format == "json":
+            payload["format"] = "json"
         
         try:
             response = requests.post(self._url, json=payload, timeout=120)

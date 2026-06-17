@@ -77,7 +77,7 @@ class QuizService:
             code_mix=lang_info.code_mix_type or "none",
         )
         try:
-            raw = self._client.generate(prompt)
+            raw = self._client.generate(prompt, format="json")
             # Strip markdown code fences if present
             raw = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
             # Find the JSON object
