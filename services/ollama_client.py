@@ -32,7 +32,7 @@ class OllamaClient:
             payload["format"] = "json"
         
         try:
-            response = requests.post(self._url, json=payload, timeout=120)
+            response = requests.post(self._url, json=payload, timeout=300)
             response.raise_for_status()
             data = response.json()
             return data.get("response", "")
