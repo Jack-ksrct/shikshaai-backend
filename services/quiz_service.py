@@ -89,14 +89,31 @@ class QuizService:
             raw = self._client.generate(prompt, format="json")
             # Strip markdown code fences if present
             raw = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
-            # Find the JSON object
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            if not match:
-                raise ValueError("No JSON object in Gemini quiz response")
-            data = json.loads(match.group())
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                match = re.search(r"\{.*\}", raw, re.DOTALL)
+                if match:
+                    data = json.loads(match.group())
+                else:
+                    match_array = re.search(r"\[.*\]", raw, re.DOTALL)
+                    if match_array:
+                        data = json.loads(match_array.group())
+                    else:
+                        raise ValueError("No JSON object or array found in response")
+
+            if isinstance(data, list):
+                mcq_list = data
+                sa_list = []
+            elif isinstance(data, dict):
+                mcq_list = data.get("mcq_questions", [])
+                sa_list = data.get("short_answer_questions", [])
+            else:
+                mcq_list = []
+                sa_list = []
 
             mcqs = []
-            for q in data.get("mcq_questions", []):
+            for q in mcq_list:
                 if isinstance(q, dict):
                     mcqs.append(MCQQuestion(
                         question=q.get("question", ""),
@@ -104,14 +121,27 @@ class QuizService:
                         correct_answer=q.get("correct_answer", "A"),
                         explanation=q.get("explanation", ""),
                     ))
+                elif isinstance(q, str):
+                    mcqs.append(MCQQuestion(
+                        question=q,
+                        options=["A", "B", "C", "D"],
+                        correct_answer="A",
+                        explanation=""
+                    ))
 
             sas = []
-            for q in data.get("short_answer_questions", []):
+            for q in sa_list:
                 if isinstance(q, dict):
                     sas.append(ShortAnswerQuestion(
                         question=q.get("question", ""),
                         model_answer=q.get("model_answer", ""),
                         keywords=q.get("keywords", []) if isinstance(q.get("keywords"), list) else [],
+                    ))
+                elif isinstance(q, str):
+                    sas.append(ShortAnswerQuestion(
+                        question=q,
+                        model_answer="",
+                        keywords=[]
                     ))
 
             return QuizResult(mcq_questions=mcqs, short_answer_questions=sas)
