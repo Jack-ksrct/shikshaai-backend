@@ -95,23 +95,25 @@ class QuizService:
                 raise ValueError("No JSON object in Gemini quiz response")
             data = json.loads(match.group())
 
-            mcqs = [
-                MCQQuestion(
-                    question=q.get("question", ""),
-                    options=q.get("options", []),
-                    correct_answer=q.get("correct_answer", "A"),
-                    explanation=q.get("explanation", ""),
-                )
-                for q in data.get("mcq_questions", [])
-            ]
-            sas = [
-                ShortAnswerQuestion(
-                    question=q.get("question", ""),
-                    model_answer=q.get("model_answer", ""),
-                    keywords=q.get("keywords", []),
-                )
-                for q in data.get("short_answer_questions", [])
-            ]
+            mcqs = []
+            for q in data.get("mcq_questions", []):
+                if isinstance(q, dict):
+                    mcqs.append(MCQQuestion(
+                        question=q.get("question", ""),
+                        options=q.get("options", []) if isinstance(q.get("options"), list) else [],
+                        correct_answer=q.get("correct_answer", "A"),
+                        explanation=q.get("explanation", ""),
+                    ))
+
+            sas = []
+            for q in data.get("short_answer_questions", []):
+                if isinstance(q, dict):
+                    sas.append(ShortAnswerQuestion(
+                        question=q.get("question", ""),
+                        model_answer=q.get("model_answer", ""),
+                        keywords=q.get("keywords", []) if isinstance(q.get("keywords"), list) else [],
+                    ))
+
             return QuizResult(mcq_questions=mcqs, short_answer_questions=sas)
 
         except Exception as exc:
